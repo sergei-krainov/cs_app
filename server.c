@@ -1,0 +1,74 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
+
+int main() {
+    int def_sock, new_sock;
+    struct sockaddr_in s_addr;
+    struct sockaddr_in n_addr;
+    socklen_t addr_size;
+    char buffer[1024];
+    
+    /*---- Create the socket. The three arguments are: ----*/
+    /* 1) Internet domain 2) Stream socket 3) Default protocol (TCP in this case) */
+    def_sock = socket(AF_INET, SOCK_STREAM, 0);
+    
+    if  (def_sock == -1) {
+        printf("Socket can't be created, exit script");
+        exit(1);
+    }
+    
+    
+    /*---- Configure settings of the server address struct ----*/
+    s_addr.sin_family = AF_INET;
+    s_addr.sin_port = htons(5001);
+    s_addr.sin_addr.s_addr = INADDR_ANY;
+    
+    memset(s_addr.sin_zero, '\0', sizeof s_addr.sin_zero);
+    printf("Port = '%d'\n", s_addr.sin_port);
+    
+    /*---- Bind the address struct to the socket ----*/
+    bind(def_sock, (struct sockaddr *) &s_addr, sizeof(s_addr));
+    
+    
+    
+    /*---- Listen on the socket, with 5 max connection requests queued ----*/
+    if(listen(def_sock,5)==0)
+        printf("Listening\n");
+    else
+        printf("Listening can't be started\n");
+    
+    
+    /*---- Accept call creates a new socket for the incoming connection ----*/
+    do {
+        addr_size = sizeof n_addr;
+        new_sock = accept(def_sock, (struct sockaddr *) &n_addr, &addr_size);
+        
+        if ( new_sock == -1 ) {
+            printf("Can't create socket for connection\n");
+            exit(1);
+        }    
+    
+        /*---- Send message to the socket of the incoming connection ----*/
+        memset(buffer, 0, sizeof buffer);
+        strcpy(buffer,"Hello World!\n");
+        send(new_sock,buffer,13,0);
+        
+        /*---- Read the message from the client into the buffer ----*/
+        //memset(buffer, 0, sizeof buffer);
+        if (recv(new_sock, buffer, sizeof(buffer), 0) < 0) {
+            printf("Can't get message from client\n");
+        }
+        else {
+            printf("Client said %s\n", buffer);
+        }
+        
+        
+    } while(1);
+  
+    
+    return 0;
+}
