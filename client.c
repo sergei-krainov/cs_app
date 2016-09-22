@@ -1,72 +1,99 @@
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netdb.h>
+#include <string.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <arpa/inet.h>
 
 #define DATA "Hello Server!"
 
-int main(int argc, char *argv[]) {
-    int c_socket;
-    char buffer[1024];
-    struct sockaddr_in s_addr;
-    socklen_t addr_size;
-    struct hostent *hostname;
-    
-    /*---- Checking input ----*/
-    if ( argc != 2 ) {
-        printf("Usage: %s $hostname\n", argv[0]);
-        exit(1);
-    }
-    
-    /*---- Create the socket. The three arguments are: ----*/
-    /* 1) Internet domain 2) Stream socket 3) Default protocol (TCP in this case) */
-    c_socket = socket(AF_INET, SOCK_STREAM, 0);
-    
-    
-    /*---- Configure settings of the server address struct ----*/
-    s_addr.sin_family = AF_INET;
-    s_addr.sin_port = htons(5001);
+void child_func(int childnum);
 
-    hostname = gethostbyname(argv[1]);
-    if ( hostname == NULL ) {
-        printf("Can't resolve hostname '%s'\n", argv[1]);
-        exit(1);
-    }
+int main(int argc, char *argv[])
+{
+	int nc = 1;
+	int pid;
+	int i;
+	
+	if (argc > 1) {
+		nc = atoi(argv[1]);
+	}
+	
+	for (i = 0; i < nc; i++) {
+		if ((pid = fork()) == 0) {
+			child_func(i + 1);
+			exit(0);
+		}
+	}
+	
+	wait(NULL);
+	
+	return 0;
+}
 
-    memset(s_addr.sin_zero, '\0', sizeof s_addr.sin_zero);
-    
-    
-    /*---- Connect the socket to the server using the address struct ----*/
-    addr_size = sizeof s_addr;
-    if ( connect(c_socket, (struct sockaddr *) &s_addr, addr_size) < 0 ) {
-        printf("Connection to server can't be established\n");
-        exit(1);
-    }
-    
-    
-    /*---- Read the message from the server into the buffer ----*/
-    if (recv(c_socket, buffer, sizeof(buffer), 0) < 0) {
-        printf("Can't get message from server\n");
-        exit(1);
-    }
-    else {    
-        printf("Message received from server: %s\n", buffer);
-    }
-    
-    strcpy(buffer, DATA);
-    if ( send(c_socket, buffer, sizeof(buffer), 0) < 0) {
-        printf("Can't send a message\n");
-        close(c_socket);
-        exit(1);
-    }
-    else {
-        printf("Message sent: %s\n", buffer);
-    }
-    
-    close(c_socket);
-    
-    return 0;
+void child_func(int childnum)
+{
+	int sock;
+	struct sockaddr_in s_addr;
+	char buffer[1024];
+	
+	memset((void *) &s_addr, 0, sizeof(struct sockaddr_in));
+	s_addr.sin_family = AF_INET;
+	s_addr.sin_addr.s_addr = INADDR_ANY;
+	s_addr.sin_port = 0;
+	
+	sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	bind(sock, (const struct sockaddr *) &s_addr, sizeof(s_addr));
+	
+	s_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+	s_addr.sin_port = htons(9002);
+	
+	if(connect(sock, (const struct sockaddr *) &s_addr, sizeof(s_addr)) != 0) {
+		printf("Client fail\n");
+		return;
+	}
+	
+	//memset(buffer, 0, sizeof buffer);
+	//snprintf(buffer, 128, "Data from client #%i", childnum);
+	//sleep(1);
+	//printf("child #%i sent %zu chars\n", childnum, send(sock, buffer, strlen(buffer), 0));
+	//sleep(1);
+	//printf("child #%i received %zu chars\n", childnum, recv(sock, buffer, 25, 0));
+	memset(buffer, 0, sizeof buffer);
+		strcpy(buffer, DATA);
+		if ( send(sock, buffer, sizeof(buffer), 0) < 0) {
+			printf("Can't send a message\n");
+			close(sock);
+			exit(1);
+		}
+		else {
+			printf("Message sentfrom client #%i: %s\n", childnum, buffer);
+		}
+	
+	
+	if (recv(sock, buffer, sizeof(buffer), 0) < 0) {		
+		printf("Can't get message from server\n");
+		close(sock);
+		exit(1);
+	}
+	else {    
+		printf("Client #%i. Message received from server: %s\n", childnum, buffer);
+	}
+	
+	//memset(buffer, 0, sizeof buffer);
+	//strcpy(buffer, DATA);
+	//if ( send(sock, buffer, sizeof(buffer), 0) < 0) {
+	//printf("Can't send a message\n");
+	//close(sock);
+	//exit(1);
+	//}
+	//else {
+	//printf("Message sentfrom client #%i: %s\n", childnum, buffer);
+	//}
+	
+	sleep(1);
+	close(sock);
 }
