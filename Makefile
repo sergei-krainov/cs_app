@@ -15,4 +15,4 @@ ${SERVER}:
 	${CC} ${CFLAGS} server.c server_fork.c -o server
 	
 clean:
-	rm -f ${TARGETS} received.*
+	rm -f ${TARGETS} ${SERVER} received.*
