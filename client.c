@@ -7,6 +7,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <semaphore.h>
 
 #define DATA "Hello Server!"
 #define FILENAME "received.txt"
@@ -44,7 +45,10 @@ void child_func(int childnum)
 	FILE *received_file;
 	ssize_t len;
 	int remain_data = 0;
+	//sem_t sem;
 	
+	
+	//sem_init(&sem, 0, 0);
 	memset((void *) &s_addr, 0, sizeof(struct sockaddr_in));
 	s_addr.sin_family = AF_INET;
 	s_addr.sin_addr.s_addr = INADDR_ANY;
@@ -101,6 +105,12 @@ void child_func(int childnum)
         
         remain_data = fs;
         
+        //sem_post(&sem);
+        printf("Test1\n");
+        //sem_wait(&sem);
+        printf("Test2\n");
+        //sem_post(&sem);
+        printf("Test3\n");
         
         while (((len = recv(sock, buffer, sizeof(buffer), 0)) > 0) && (remain_data > 0))
         {
@@ -108,6 +118,7 @@ void child_func(int childnum)
                 remain_data -= len;
                 printf("Receive %ld bytes. Remaining data = %d\n", len, remain_data);
         }
+        //sem_post(&sem);
         
         fclose(received_file);
 	

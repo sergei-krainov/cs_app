@@ -13,9 +13,17 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/sendfile.h>
+#include <semaphore.h>
 
 
 #define FILE_TO_SEND "cs_test.txt"
+
+void sendfile_fork(void);
+
+int ls;
+int ns;
+int fd;
+struct stat file_stat;
 
 void sigchld_handler(int signo)
 {
@@ -26,20 +34,20 @@ int main(int argc, char *argv[])
 {
 	struct sockaddr_in s_addr;
 	//struct sockaddr_in n_addr;
-	int ls;
-	int ns;
-	char buffer[1024];
+	//int ls;
+	//int ns;
+	//char buffer[1024];
 	int result;
 	//int nread;
-	int pid;
+	//int pid;
 	int var;
 	//socklen_t addr_size;
-	int fd;
-	struct stat file_stat;
-	off_t offset;
-        int remain_data;
-        int sent_bytes = 0;
-        
+	//int fd;
+	//struct stat file_stat;
+	//off_t offset;
+        //int remain_data;
+        //int sent_bytes = 0;
+        //int rc;        
         
 	
 	ls = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -55,6 +63,10 @@ int main(int argc, char *argv[])
 	s_addr.sin_family = AF_INET;
 	s_addr.sin_addr.s_addr = INADDR_ANY;
 	s_addr.sin_port = htons(9002);
+	
+	
+	//FUNCTION SHOULD BE STARTED HERE
+	
 	result = bind(ls, (struct sockaddr *) &s_addr, sizeof(s_addr));
 	if (result < 0) {
 		printf("Socket binding error\n");
@@ -70,7 +82,7 @@ int main(int argc, char *argv[])
 		printf("Listening on port 9002\n");
 	}
 	
-	signal(SIGCHLD, sigchld_handler);
+	//signal(SIGCHLD, sigchld_handler);
 	
 	fd = open(FILE_TO_SEND, O_RDONLY);
 	if (fd == -1)
@@ -87,12 +99,74 @@ int main(int argc, char *argv[])
 	
 	fprintf(stdout, "File Size: \n%zu bytes\n", file_stat.st_size);
 
+	sendfile_fork();
+	//while(1) {
+		//ns = accept(ls, NULL, NULL);
+		//if ((pid = fork()) == 0) {
+			//close(ls);
+			
+			
+			
+			
+			
+			//memset(buffer, 0, sizeof buffer);
+			//printf("Child process %i created\n", getpid());
+			////close(ls);
+			
+			////nread = recv(ns, buffer, sizeof(buffer), 0);
+			////buffer[nread] = '\0';
+			////printf("Received from client: %s\n", buffer);
+			
+			//memset(buffer, 0, sizeof buffer);			
+			//sprintf(buffer, "%zu", file_stat.st_size);
+			
+			//if (send(ns, buffer, sizeof(buffer), 0) < 0) {
+				//printf("Can't send message to client\n");
+			//}
+			//else {
+				//printf("Sending file size = %s\n", buffer);
+			//}
+			
+			//offset = 0;
+		        //remain_data = file_stat.st_size;
+		        //memset(buffer, 0, sizeof buffer);
+        		////* Sending file data */
+        		//while (((sent_bytes = sendfile(ns, fd, &offset, sizeof(buffer))) > 0) && (remain_data > 0)) {
+				//remain_data -= sent_bytes;
+				//printf("Server sent %d bytes from file's data, offset is now : %zu and remaining data = %d\n", sent_bytes, offset, remain_data);
+			//}
+			
+			//close(fd);
+			//close(ns);
+			//printf("Child %i terminated\n", getpid());
+			//exit(0);
+		//}
+		//close(ns);
+		//close(fd);
+	//}
+	
+	
+	return 0;
+}
+
+
+void sendfile_fork(void)
+{
+	int pid;
+	char buffer[1024];
+	//int result;
+	off_t offset;
+        int remain_data;
+        int sent_bytes = 0;
+        //sem_t sem;
+	
+	signal(SIGCHLD, sigchld_handler);
 	
 	while(1) {
-		//addr_size = sizeof(s_addr);
 		ns = accept(ls, NULL, NULL);
 		if ((pid = fork()) == 0) {
 			close(ls);
+			
 			memset(buffer, 0, sizeof buffer);
 			printf("Child process %i created\n", getpid());
 			//close(ls);
@@ -114,11 +188,15 @@ int main(int argc, char *argv[])
 			offset = 0;
 		        remain_data = file_stat.st_size;
 		        memset(buffer, 0, sizeof buffer);
+		        //sem_init(&sem, 0, 0);
+		        
         		/* Sending file data */
+        		//sem_wait(&sem);
         		while (((sent_bytes = sendfile(ns, fd, &offset, sizeof(buffer))) > 0) && (remain_data > 0)) {
 				remain_data -= sent_bytes;
 				printf("Server sent %d bytes from file's data, offset is now : %zu and remaining data = %d\n", sent_bytes, offset, remain_data);
 			}
+			//sem_post(&sem);
 			
 			close(fd);
 			close(ns);
@@ -129,6 +207,5 @@ int main(int argc, char *argv[])
 		close(fd);
 	}
 	
-	
-	return 0;
+	return;
 }

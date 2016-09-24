@@ -3,7 +3,7 @@
 TARGETS := server
 TARGETS += client
 
-CFLAGS = -Wall -g -std=c99 -Werror
+CFLAGS = -Wall -g -std=c99 -Werror -pthread
 
 CC = gcc
 
