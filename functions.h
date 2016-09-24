@@ -1,7 +1,2 @@
-extern int ls;
-extern int ns;
-extern int fd;
-extern struct stat file_stat;
-
 void sigchld_handler(int signo);
-void sendfile_fork(void);
+void sendfile_fork(void *nso, void *fdo, ssize_t f_size);

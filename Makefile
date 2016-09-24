@@ -1,16 +1,18 @@
 # Makefile for client-server application
 
-TARGETS := server
-TARGETS += client
-
-CFLAGS = -Wall -g -std=c99 -Werror -pthread
+SERVER = server server_fork
+TARGETS := client
+CFLAGS = -Wall -g -std=c99 -Werror
 
 CC = gcc
 
-all: clean ${TARGETS}
+all: clean ${TARGETS} ${SERVER}
 
 ${TARGETS}:
 	${CC} ${CFLAGS} $@.c -o $@
+	
+${SERVER}:
+	${CC} ${CFLAGS} server.c server_fork.c -o server
 	
 clean:
 	rm -f ${TARGETS} received.*
