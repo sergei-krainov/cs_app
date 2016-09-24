@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <semaphore.h>
+#include <fcntl.h>
 
 #define DATA "Hello Server!"
 #define FILENAME "received.txt"
@@ -96,6 +97,7 @@ void child_func(int childnum)
 	fs = atoi(buffer);
 	//printf("Size = %d\n", fs);
 	
+	
 	received_file = fopen(FILENAME, "w");
         if (received_file == NULL)
         {
@@ -112,15 +114,26 @@ void child_func(int childnum)
         //sem_post(&sem);
         printf("Test3\n");
         
+        printf("Test5\n");
+        len = 0;
+        printf("BEGINNING = %d\n", fcntl(sock, F_GETFD));
+        printf("Test5: %ld, %d\n", len, remain_data);
+        //sleep(2);
+        memset(buffer, 0, sizeof buffer);
         while (((len = recv(sock, buffer, sizeof(buffer), 0)) > 0) && (remain_data > 0))
         {
+                printf("Test7\n");
                 fwrite(buffer, sizeof(char), len, received_file);
                 remain_data -= len;
-                printf("Receive %ld bytes. Remaining data = %d\n", len, remain_data);
+                printf("Client #%i. Received %ld bytes. Remaining data = %d\n", childnum, len, remain_data);
         }
+        if (len < 0)
+        	printf("Client #%i failed to receive file\n", childnum);
+        //sleep(1);
         //sem_post(&sem);
         
         fclose(received_file);
+        sleep(1);
 	
 	//memset(buffer, 0, sizeof buffer);
 	//strcpy(buffer, DATA);
@@ -135,4 +148,5 @@ void child_func(int childnum)
 	
 	//sleep(1);
 	close(sock);
+	return;
 }
