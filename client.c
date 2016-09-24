@@ -9,6 +9,7 @@
 #include <arpa/inet.h>
 
 #define DATA "Hello Server!"
+#define FILENAME "received.txt"
 
 void child_func(int childnum);
 
@@ -39,6 +40,10 @@ void child_func(int childnum)
 	int sock;
 	struct sockaddr_in s_addr;
 	char buffer[1024];
+	int fs;
+	FILE *received_file;
+	ssize_t len;
+	int remain_data = 0;
 	
 	memset((void *) &s_addr, 0, sizeof(struct sockaddr_in));
 	s_addr.sin_family = AF_INET;
@@ -62,18 +67,19 @@ void child_func(int childnum)
 	//printf("child #%i sent %zu chars\n", childnum, send(sock, buffer, strlen(buffer), 0));
 	//sleep(1);
 	//printf("child #%i received %zu chars\n", childnum, recv(sock, buffer, 25, 0));
+	//memset(buffer, 0, sizeof buffer);
+	//strcpy(buffer, DATA);
+	//if ( send(sock, buffer, sizeof(buffer), 0) < 0) {
+		//printf("Can't send a message\n");
+	//close(sock);
+	//exit(1);
+	//}
+	//else {
+		//printf("Message sent from client #%i: %s\n", childnum, buffer);
+	//}
+	
+	
 	memset(buffer, 0, sizeof buffer);
-		strcpy(buffer, DATA);
-		if ( send(sock, buffer, sizeof(buffer), 0) < 0) {
-			printf("Can't send a message\n");
-			close(sock);
-			exit(1);
-		}
-		else {
-			printf("Message sentfrom client #%i: %s\n", childnum, buffer);
-		}
-	
-	
 	if (recv(sock, buffer, sizeof(buffer), 0) < 0) {		
 		printf("Can't get message from server\n");
 		close(sock);
@@ -82,6 +88,28 @@ void child_func(int childnum)
 	else {    
 		printf("Client #%i. Message received from server: %s\n", childnum, buffer);
 	}
+	
+	fs = atoi(buffer);
+	//printf("Size = %d\n", fs);
+	
+	received_file = fopen(FILENAME, "w");
+        if (received_file == NULL)
+        {
+                printf("Failed to open file for writing '%s'\n", FILENAME);
+                exit(1);
+        }
+        
+        remain_data = fs;
+        
+        
+        while (((len = recv(sock, buffer, sizeof(buffer), 0)) > 0) && (remain_data > 0))
+        {
+                fwrite(buffer, sizeof(char), len, received_file);
+                remain_data -= len;
+                printf("Receive %ld bytes. Remaining data = %d\n", len, remain_data);
+        }
+        
+        fclose(received_file);
 	
 	//memset(buffer, 0, sizeof buffer);
 	//strcpy(buffer, DATA);
@@ -94,6 +122,6 @@ void child_func(int childnum)
 	//printf("Message sentfrom client #%i: %s\n", childnum, buffer);
 	//}
 	
-	sleep(1);
+	//sleep(1);
 	close(sock);
 }

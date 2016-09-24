@@ -13,4 +13,4 @@ ${TARGETS}:
 	${CC} ${CFLAGS} $@.c -o $@
 	
 clean:
-	rm -f ${TARGETS}
+	rm -f ${TARGETS} received.*
