@@ -16,32 +16,24 @@
 #include <semaphore.h>
 #include <fcntl.h>
 #include "functions.h"
-
+#include <pthread.h>
 
 #define FILE_TO_SEND "cs_test.txt"
 
 //void sigchld_handler(int signo);
 
-void sendfile_fork(void *nso)
+void *sendfile_threads(void *nso)
 {
-	//int pid;
 	char buffer[1024];
-	//int result;
 	off_t offset;
         int remain_data;
         int sent_bytes = 0;
         int sock;
-        //int fd;
-        //fd = (intptr_t) fdo;
         sock = (intptr_t) nso;
         int fd;
 	struct stat file_stat;
 	
-	//signal(SIGCHLD, sigchld_handler);
-	
-	//memset(buffer, 0, sizeof buffer);
-	printf("Child process %i created\n", getpid());
-	//close(ls);
+	printf("Child thread %lu with pid %i created\n", pthread_self(), getpid());
 	
 	fd = open(FILE_TO_SEND, O_RDONLY);
 	if (fd == -1)
@@ -72,10 +64,8 @@ void sendfile_fork(void *nso)
         remain_data = file_stat.st_size;
         memset(buffer, 0, sizeof buffer);
         sent_bytes = 0;
-        //sem_init(&sem, 0, 0);
         
 	//* Sending file data */
-	//sem_wait(&sem);
 	printf("Test2, %d, %d\n", sent_bytes, remain_data);
 	printf("fd = %d\n", fcntl(sock, F_GETFD)); 
 	while (((sent_bytes = sendfile(sock, fd, &offset, sizeof(buffer))) > 0) && (remain_data > 0)) {
@@ -88,6 +78,6 @@ void sendfile_fork(void *nso)
 	
 	close(fd);
 	close(sock);
-	printf("Child %i terminated\n", getpid());
-	exit(0);
+	printf("Child thread %lu with pid %i terminated\n", pthread_self(), getpid());
+	pthread_exit(0);
 }

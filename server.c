@@ -17,12 +17,14 @@
 #include <fcntl.h>
 #include <stdint.h>
 #include "functions.h"
+#include <pthread.h>
 
 
 #define FILE_TO_SEND "cs_test.txt"
 
 //void sendfile_fork(void);
-void sendfile_fork(void *nso, void *fdo, ssize_t f_size);
+//void sendfile_fork(void *nso, void *fdo, ssize_t f_size);
+void *sendfile_threads(void *nso);
 
 //int ls;
 //int ns;
@@ -43,11 +45,12 @@ int main(int argc, char *argv[])
 	//char buffer[1024];
 	int result;
 	//int nread;
-	int pid;
+	//int pid;
 	int var;
+	pthread_t thread_id;
 	//socklen_t addr_size;
-	int fd;
-	struct stat file_stat;
+	//int fd;
+	//struct stat file_stat;
 	//off_t offset;
         //int remain_data;
         //int sent_bytes = 0;
@@ -83,63 +86,89 @@ int main(int argc, char *argv[])
 		printf("Listening on port 9002\n");
 	}
 	
-	//signal(SIGCHLD, sigchld_handler);
+	signal(SIGCHLD, sigchld_handler);
 	
-	fd = open(FILE_TO_SEND, O_RDONLY);
-	if (fd == -1)
-	{
-		printf("Error opening file %s\n", FILE_TO_SEND);
-		exit(1);
-	}
+	//fd = open(FILE_TO_SEND, O_RDONLY);
+	//if (fd == -1)
+	//{
+		//printf("Error opening file %s\n", FILE_TO_SEND);
+		//exit(1);
+	//}
 	
-	if (fstat(fd, &file_stat) < 0)
-	{
-		printf("Can't get file_stat for file %s\n", FILE_TO_SEND);
-		exit(1);
-	}
+	//if (fstat(fd, &file_stat) < 0)
+	//{
+		//printf("Can't get file_stat for file %s\n", FILE_TO_SEND);
+		//exit(1);
+	//}
 	
-	fprintf(stdout, "File Size: \n%zu bytes\n", file_stat.st_size);
+	//fprintf(stdout, "File Size: \n%zu bytes\n", file_stat.st_size);
 
 	//sendfile_fork();
 	while(1) {
 		ns = accept(ls, NULL, NULL);
-		if ((pid = fork()) == 0) {
-			close(ls);
-			
-			sendfile_fork((void *) (intptr_t) ns, (void *) (intptr_t) fd, file_stat.st_size);
-			//memset(buffer, 0, sizeof buffer);
-			//printf("Child process %i created\n", getpid());
+		result = pthread_create(&thread_id, NULL, sendfile_threads, (void *) (intptr_t) ns);
+			if (result != 0) {
+				printf("Can't create thread");
+			}
+			//else {
+			//	pthread_join(thread_id, NULL);
+			//}
+				
+			pthread_detach(thread_id);
+			sched_yield();
+		
+		//if ((pid = fork()) == 0) {
 			//close(ls);
 			
-			//nread = recv(ns, buffer, sizeof(buffer), 0);
-			//buffer[nread] = '\0';
-			//printf("Received from client: %s\n", buffer);
+			////sendfile_fork((void *) (intptr_t) ns);
 			
-			//memset(buffer, 0, sizeof buffer);			
-			//sprintf(buffer, "%zu", file_stat.st_size);
 			
-			//if (send(ns, buffer, sizeof(buffer), 0) < 0) {
-				//printf("Can't send message to client\n");
+			//result = pthread_create(&thread_id, NULL, sendfile_threads, (void *) (intptr_t) ns);
+			//if (result != 0) {
+				//printf("Can't create thread");
 			//}
 			//else {
-				//printf("Sending file size = %s\n", buffer);
+				//pthread_join(thread_id, NULL);
 			//}
+				
+			////pthread_detach(thread_id);
+			////sched_yield();
 			
-			//offset = 0;
-		        //remain_data = file_stat.st_size;
-		        //memset(buffer, 0, sizeof buffer);
-        		////* Sending file data */
-        		//while (((sent_bytes = sendfile(ns, fd, &offset, sizeof(buffer))) > 0) && (remain_data > 0)) {
-				//remain_data -= sent_bytes;
-				//printf("Server sent %d bytes from file's data, offset is now : %zu and remaining data = %d\n", sent_bytes, offset, remain_data);
-			//}
 			
-			//close(fd);
-			//close(ns);
-			//printf("Child %i terminated\n", getpid());
-			//exit(0);
-		}
-		close(ns);
+			
+			////memset(buffer, 0, sizeof buffer);
+			////printf("Child process %i created\n", getpid());
+			////close(ls);
+			
+			////nread = recv(ns, buffer, sizeof(buffer), 0);
+			////buffer[nread] = '\0';
+			////printf("Received from client: %s\n", buffer);
+			
+			////memset(buffer, 0, sizeof buffer);			
+			////sprintf(buffer, "%zu", file_stat.st_size);
+			
+			////if (send(ns, buffer, sizeof(buffer), 0) < 0) {
+				////printf("Can't send message to client\n");
+			////}
+			////else {
+				////printf("Sending file size = %s\n", buffer);
+			////}
+			
+			////offset = 0;
+		        ////remain_data = file_stat.st_size;
+		        ////memset(buffer, 0, sizeof buffer);
+        		//////* Sending file data */
+        		////while (((sent_bytes = sendfile(ns, fd, &offset, sizeof(buffer))) > 0) && (remain_data > 0)) {
+				////remain_data -= sent_bytes;
+				////printf("Server sent %d bytes from file's data, offset is now : %zu and remaining data = %d\n", sent_bytes, offset, remain_data);
+			////}
+			
+			////close(fd);
+			////close(ns);
+			////printf("Child %i terminated\n", getpid());
+			////exit(0);
+		//}
+		//close(ns);
 		//close(fd);
 	}
 	
