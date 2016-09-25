@@ -26,11 +26,11 @@ void *sendfile_threads(void *nso)
 {
 	char buffer[1024];
 	off_t offset;
-        int remain_data;
-        int sent_bytes = 0;
-        int sock;
-        sock = (intptr_t) nso;
-        int fd;
+	int remain_data;
+	int sent_bytes = 0;
+	int sock;
+	sock = (intptr_t) nso;
+	int fd;
 	struct stat file_stat;
 	
 	printf("Child thread %lu with pid %i created\n", pthread_self(), getpid());
@@ -48,8 +48,6 @@ void *sendfile_threads(void *nso)
 		exit(1);
 	}
 	
-	fprintf(stdout, "File Size: \n%zu bytes\n", file_stat.st_size);
-	
 	memset(buffer, 0, sizeof buffer);			
 	sprintf(buffer, "%zu", file_stat.st_size);
 	
@@ -61,20 +59,15 @@ void *sendfile_threads(void *nso)
 	}
 	
 	offset = 0;
-        remain_data = file_stat.st_size;
-        memset(buffer, 0, sizeof buffer);
-        sent_bytes = 0;
-        
+	remain_data = file_stat.st_size;
+	memset(buffer, 0, sizeof buffer);
+	sent_bytes = 0;
+	
 	//* Sending file data */
-	printf("Test2, %d, %d\n", sent_bytes, remain_data);
-	printf("fd = %d\n", fcntl(sock, F_GETFD)); 
 	while (((sent_bytes = sendfile(sock, fd, &offset, sizeof(buffer))) > 0) && (remain_data > 0)) {
-		printf("Test3\n");
 		remain_data -= sent_bytes;
 		printf("Server sent %d bytes from file's data, offset is now : %zu and remaining data = %d\n", sent_bytes, offset, remain_data);
 	}
-	printf("Test4 => %d\n", sent_bytes);
-	//sem_post(&sem);
 	
 	close(fd);
 	close(sock);

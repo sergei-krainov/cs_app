@@ -21,9 +21,8 @@ int main(int argc, char *argv[])
 	int pid;
 	int i;
 	
-	if (argc > 1) {
+	if (argc > 1)
 		nc = atoi(argv[1]);
-	}
 	
 	for (i = 0; i < nc; i++) {
 		if ((pid = fork()) == 0) {
@@ -46,10 +45,7 @@ void child_func(int childnum)
 	FILE *received_file;
 	ssize_t len;
 	int remain_data = 0;
-	//sem_t sem;
 	
-	
-	//sem_init(&sem, 0, 0);
 	memset((void *) &s_addr, 0, sizeof(struct sockaddr_in));
 	s_addr.sin_family = AF_INET;
 	s_addr.sin_addr.s_addr = INADDR_ANY;
@@ -66,24 +62,6 @@ void child_func(int childnum)
 		return;
 	}
 	
-	//memset(buffer, 0, sizeof buffer);
-	//snprintf(buffer, 128, "Data from client #%i", childnum);
-	//sleep(1);
-	//printf("child #%i sent %zu chars\n", childnum, send(sock, buffer, strlen(buffer), 0));
-	//sleep(1);
-	//printf("child #%i received %zu chars\n", childnum, recv(sock, buffer, 25, 0));
-	//memset(buffer, 0, sizeof buffer);
-	//strcpy(buffer, DATA);
-	//if ( send(sock, buffer, sizeof(buffer), 0) < 0) {
-		//printf("Can't send a message\n");
-	//close(sock);
-	//exit(1);
-	//}
-	//else {
-		//printf("Message sent from client #%i: %s\n", childnum, buffer);
-	//}
-	
-	
 	memset(buffer, 0, sizeof buffer);
 	if (recv(sock, buffer, sizeof(buffer), 0) < 0) {		
 		printf("Can't get message from server\n");
@@ -95,58 +73,31 @@ void child_func(int childnum)
 	}
 	
 	fs = atoi(buffer);
-	//printf("Size = %d\n", fs);
 	
 	
 	received_file = fopen(FILENAME, "w");
-        if (received_file == NULL)
-        {
-                printf("Failed to open file for writing '%s'\n", FILENAME);
-                exit(1);
-        }
-        
-        remain_data = fs;
-        
-        //sem_post(&sem);
-        printf("Test1\n");
-        //sem_wait(&sem);
-        printf("Test2\n");
-        //sem_post(&sem);
-        printf("Test3\n");
-        
-        printf("Test5\n");
-        len = 0;
-        printf("BEGINNING = %d\n", fcntl(sock, F_GETFD));
-        printf("Test5: %ld, %d\n", len, remain_data);
-        //sleep(2);
-        memset(buffer, 0, sizeof buffer);
-        while (((len = recv(sock, buffer, sizeof(buffer), 0)) > 0) && (remain_data > 0))
-        {
-                printf("Test7\n");
-                fwrite(buffer, sizeof(char), len, received_file);
-                remain_data -= len;
-                printf("Client #%i. Received %ld bytes. Remaining data = %d\n", childnum, len, remain_data);
-        }
-        if (len < 0)
-        	printf("Client #%i failed to receive file\n", childnum);
-        //sleep(1);
-        //sem_post(&sem);
-        
-        fclose(received_file);
-        sleep(1);
+	if (received_file == NULL)
+	{
+		printf("Failed to open file for writing '%s'\n", FILENAME);
+		exit(1);
+	}
 	
-	//memset(buffer, 0, sizeof buffer);
-	//strcpy(buffer, DATA);
-	//if ( send(sock, buffer, sizeof(buffer), 0) < 0) {
-	//printf("Can't send a message\n");
-	//close(sock);
-	//exit(1);
-	//}
-	//else {
-	//printf("Message sentfrom client #%i: %s\n", childnum, buffer);
-	//}
+	remain_data = fs;
 	
-	//sleep(1);
+	len = 0;
+	memset(buffer, 0, sizeof buffer);
+	while (((len = recv(sock, buffer, sizeof(buffer), 0)) > 0) && (remain_data > 0))
+	{
+		fwrite(buffer, sizeof(char), len, received_file);
+		remain_data -= len;
+		printf("Client #%i. Received %ld bytes. Remaining data = %d\n", childnum, len, remain_data);
+	}
+	if (len < 0)
+		printf("Client #%i failed to receive file\n", childnum);
+	
+	fclose(received_file);
+	sleep(1);
+	
 	close(sock);
 	return;
 }
