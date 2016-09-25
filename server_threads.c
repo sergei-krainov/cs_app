@@ -15,7 +15,7 @@
 #include <sys/sendfile.h>
 #include <semaphore.h>
 #include <fcntl.h>
-#include "functions.h"
+#include "threads_functions.h"
 #include <pthread.h>
 
 #define FILE_TO_SEND "cs_test.txt"

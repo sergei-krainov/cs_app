@@ -15,7 +15,7 @@
 #include <sys/sendfile.h>
 #include <semaphore.h>
 #include <fcntl.h>
-#include "functions.h"
+#include "fork_functions.h"
 
 
 #define FILE_TO_SEND "cs_test.txt"
@@ -90,4 +90,9 @@ void sendfile_fork(void *nso)
 	close(sock);
 	printf("Child %i terminated\n", getpid());
 	exit(0);
+}
+
+void sigchld_handler(int signo)
+{
+	while(waitpid(-1, NULL, WNOHANG) > 0);
 }

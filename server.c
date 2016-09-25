@@ -16,30 +16,30 @@
 #include <semaphore.h>
 #include <fcntl.h>
 #include <stdint.h>
-#include "functions.h"
 #include <pthread.h>
+#include "fork_functions.h"
+#include "threads_functions.h"
 
+/* Behavior switch, you should define at least one.
+ * If both defined - server will work using THREADS
+ */
+
+#define FORK
+#define THREADS
 
 #define FILE_TO_SEND "cs_test.txt"
 
 //void sendfile_fork(void);
-//void sendfile_fork(void *nso, void *fdo, ssize_t f_size);
-void *sendfile_threads(void *nso);
+//void *sendfile_threads(void *nso);
 
-//int ls;
-//int ns;
-//int fd;
-//struct stat file_stat;
-
-void sigchld_handler(int signo)
-{
-	while(waitpid(-1, NULL, WNOHANG) > 0);
-}
+//void sigchld_handler(int signo)
+//{
+	//while(waitpid(-1, NULL, WNOHANG) > 0);
+//}
 
 int main(int argc, char *argv[])
 {
 	struct sockaddr_in s_addr;
-	//struct sockaddr_in n_addr;
 	int ls;
 	int ns;
 	//char buffer[1024];
@@ -47,14 +47,28 @@ int main(int argc, char *argv[])
 	//int nread;
 	//int pid;
 	int var;
-	pthread_t thread_id;
+	//pthread_t thread_id;
 	//socklen_t addr_size;
 	//int fd;
 	//struct stat file_stat;
 	//off_t offset;
         //int remain_data;
         //int sent_bytes = 0;
-        //int rc;     
+        //int rc;
+        int bh = 0;
+        
+        #ifdef FORK
+        	bh = 1;
+        #endif
+        #ifdef THREADS
+        	bh = 2;
+        #endif
+        
+        if (bh == 0) {
+		printf("Please set behavior(FORK or THREADS) in DEFINE section. It's not done yet, exiting\n");
+		exit(0);
+	}
+        	
         
 	
 	ls = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -106,33 +120,72 @@ int main(int argc, char *argv[])
 	//sendfile_fork();
 	while(1) {
 		ns = accept(ls, NULL, NULL);
-		result = pthread_create(&thread_id, NULL, sendfile_threads, (void *) (intptr_t) ns);
-			if (result != 0) {
-				printf("Can't create thread");
+		
+		switch(bh) {
+		case 1:
+			printf("Fork initialized\n");
+			int pid;
+			
+			if ((pid = fork()) == 0) {
+				close(ls);
+			
+				sendfile_fork((void *) (intptr_t) ns);
 			}
-			//else {
-			//	pthread_join(thread_id, NULL);
+			close(ns);
+			break;
+		case 2:
+			printf("Threads initialized\n");
+			pthread_t thread_id;
+			
+			pthread_create(&thread_id, NULL, sendfile_threads, (void *) (intptr_t) ns);
+			break;
+		default :
+			printf("Impossible to come here\n");
+			break;
+		}
+		
+		//#ifdef FORK
+			//printf("Fork initialized\n");
+			//int pid;
+			
+			//if ((pid = fork()) == 0) {
+				//close(ls);
+			
+				//sendfile_fork((void *) (intptr_t) ns);
 			//}
+			//close(ns);
+			//continue;
+		//#endif
+		
+		//#ifdef THREADS
+			//printf("Threads initialized\n");
+			//pthread_t thread_id;
+			
+			//pthread_create(&thread_id, NULL, sendfile_threads, (void *) (intptr_t) ns);
+			//continue;
+		//#endif
+		
+		//printf("Please set behavior(FORK or THREADS) in DEFINE section. It's not done yet, exiting\n");
+		//close(ls);
+		//close(ns);
+		//exit(0);
+	}
+	
+	return 0;
+	
+	
+		//result = pthread_create(&thread_id, NULL, sendfile_threads, (void *) (intptr_t) ns);
+		//if (result != 0) {
+			//printf("Can't create thread");
+		//}
 				
-			pthread_detach(thread_id);
-			sched_yield();
+		//pthread_detach(thread_id);
+		//sched_yield();
 		
 		//if ((pid = fork()) == 0) {
 			//close(ls);
 			
 			////sendfile_fork((void *) (intptr_t) ns);
-			
-			
-			//result = pthread_create(&thread_id, NULL, sendfile_threads, (void *) (intptr_t) ns);
-			//if (result != 0) {
-				//printf("Can't create thread");
-			//}
-			//else {
-				//pthread_join(thread_id, NULL);
-			//}
-				
-			////pthread_detach(thread_id);
-			////sched_yield();
 			
 			
 			
@@ -170,10 +223,10 @@ int main(int argc, char *argv[])
 		//}
 		//close(ns);
 		//close(fd);
-	}
+	//}
 	
 	
-	return 0;
+	//return 0;
 }
 
 
