@@ -13,7 +13,7 @@ ${TARGETS}:
 	${CC} ${CFLAGS} $@.c -o $@
 	
 ${SERVER}:
-	${CC} ${CFLAGS_SERVER} server.c server_fork.c server_threads.c -o server
+	${CC} ${CFLAGS_SERVER} server.c functions.c -o server
 	
 clean:
 	rm -f ${TARGETS} ${SERVER} received.*

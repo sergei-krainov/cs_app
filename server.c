@@ -17,17 +17,10 @@
 #include <fcntl.h>
 #include <stdint.h>
 #include <pthread.h>
-#include "fork_functions.h"
-#include "threads_functions.h"
+#include "functions.h"
 
-/* Behavior switch, you should define at least one.
- * If both defined - server will work using THREADS
- */
-
-#define FORK
+//define FORK
 #define THREADS
-
-#define FILE_TO_SEND "cs_test.txt"
 
 int main(int argc, char *argv[])
 {
@@ -36,21 +29,6 @@ int main(int argc, char *argv[])
 	int ns;
 	int result;
 	int var;
-	int bh = 0;
-	
-	#ifdef FORK
-		bh = 1;
-	#endif
-	#ifdef THREADS
-		bh = 2;
-	#endif
-	
-	if (bh == 0) {
-		printf("Please set behavior(FORK or THREADS) in DEFINE section. It's not done yet, exiting\n");
-		exit(0);
-	}
-		
-	
 	
 	ls = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	
@@ -86,28 +64,22 @@ int main(int argc, char *argv[])
 	while(1) {
 		ns = accept(ls, NULL, NULL);
 		
-		switch(bh) {
-		case 1:
-			printf("Fork initialized\n");
-			int pid;
-			
-			if ((pid = fork()) == 0) {
-				close(ls);
-			
-				sendfile_fork((void *) (intptr_t) ns);
-			}
-			close(ns);
-			break;
-		case 2:
-			printf("Threads initialized\n");
+		#ifdef FORK
+            printf("Fork initialized\n");
+            int pid;
+            if ((pid = fork()) == 0) {
+                close(ls);
+                
+                sendfile_mp((void *) (intptr_t) ns);
+                exit(0);
+            }
+            close(ns);
+        #else
+            printf("Threads initialized\n");
 			pthread_t thread_id;
-			
-			pthread_create(&thread_id, NULL, sendfile_threads, (void *) (intptr_t) ns);
-			break;
-		default :
-			printf("Impossible to come here\n");
-			break;
-		}
+            
+            pthread_create(&thread_id, NULL, (void *) sendfile_mp, (void *) (intptr_t) ns);
+        #endif
 	}
 	
 	return 0;
