@@ -65,21 +65,21 @@ int main(int argc, char *argv[])
 		ns = accept(ls, NULL, NULL);
 		
 		#ifdef FORK
-            printf("Fork initialized\n");
-            int pid;
-            if ((pid = fork()) == 0) {
-                close(ls);
-                
-                sendfile_mp((void *) (intptr_t) ns);
-                exit(0);
-            }
-            close(ns);
-        #else
-            printf("Threads initialized\n");
+			printf("Fork initialized\n");
+			int pid;
+			if ((pid = fork()) == 0) {
+				close(ls);
+				
+				sendfile_mp((void *) (intptr_t) ns);
+				exit(0);
+			}
+			close(ns);
+		#else
+			printf("Threads initialized\n");
 			pthread_t thread_id;
-            
-            pthread_create(&thread_id, NULL, (void *) sendfile_mp, (void *) (intptr_t) ns);
-        #endif
+			
+			pthread_create(&thread_id, NULL, (void *) sendfile_mp, (void *) (intptr_t) ns);
+		#endif
 	}
 	
 	return 0;
